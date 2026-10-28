@@ -818,7 +818,7 @@
                 const isCompleted = gameState.unlockedStages[idx + 1] || (idx === STAGES.length - 1 && gameState.currentQuestionIdx >= stage.questions.length && isUnlocked);
 
                 const card = document.createElement('div');
-                card.className = `p-5 rounded-3xl border-3 transition-all flex flex-col justify-between ${
+                card.className = `p-5 rounded-3xl border-[3px] transition-all flex flex-col justify-between ${
                     isUnlocked 
                         ? 'bg-white border-' + stage.color + '-400 shadow-lg cursor-pointer hover:scale-105' 
                         : 'bg-slate-100 border-slate-300 opacity-60 cursor-not-allowed'
@@ -950,15 +950,6 @@
                 playSound('wrong');
                 gameState.lives = Math.max(0, gameState.lives - 1);
                 showFeedbackModal(false, "差一點點！再接再厲！", q.rationale);
-
-                if (gameState.lives === 0) {
-                    // 生命值用盡
-                    setTimeout(() => {
-                        alert("生命值耗盡！別灰心，讓我們重新補充能量再出發！");
-                        gameState.lives = 3;
-                        showMapScreen();
-                    }, 1200);
-                }
             }
         }
 
@@ -987,6 +978,15 @@
         // 切換至下一題
         function nextQuestion() {
             document.getElementById('feedback-modal').classList.add('hidden');
+
+            // 生命值用盡：看完解析後回到關卡地圖，補滿生命重新出發
+            if (gameState.lives === 0) {
+                alert("生命值耗盡！別灰心，讓我們重新補充能量再出發！");
+                gameState.lives = 3;
+                showMapScreen();
+                return;
+            }
+
             const stage = STAGES[gameState.currentStageIdx];
             gameState.currentQuestionIdx++;
 
@@ -1127,6 +1127,7 @@
         // 重新開始
         function restartGame() {
             gameState = {
+                studentName: gameState.studentName,
                 currentStageIdx: 0,
                 currentQuestionIdx: 0,
                 lives: 3,
