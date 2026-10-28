@@ -1,0 +1,1239 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>自然科學探險王：小三自然期中大闖關</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Zen Maru Gothic', sans-serif, system-ui;
+            background: linear-gradient(135deg, #e0f2fe 0%, #f0fdf4 50%, #fef3c7 100%);
+            min-height: 100vh;
+            user-select: none;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(12px);
+            border: 3px solid rgba(255, 255, 255, 0.6);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        }
+        .btn-bounce {
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .btn-bounce:hover {
+            transform: scale(1.05) translateY(-2px);
+        }
+        .btn-bounce:active {
+            transform: scale(0.95) translateY(2px);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 8px;
+        }
+        @keyframes pulse-subtle {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.03); }
+        }
+        .animate-pulse-subtle {
+            animation: pulse-subtle 3s infinite ease-in-out;
+        }
+        @keyframes bounce-gentle {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+        }
+        .animate-bounce-gentle {
+            animation: bounce-gentle 2.5s infinite ease-in-out;
+        }
+        .typing-cursor::after {
+            content: '|';
+            animation: blink 0.8s infinite;
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center p-3 sm:p-6 text-slate-800">
+
+    <!-- 主遊戲容器 -->
+    <div class="w-full max-w-4xl min-h-[650px] glass-card rounded-3xl overflow-hidden flex flex-col relative">
+
+        <!-- 頂部資訊列 (生命值、關卡、分數、音效開關) -->
+        <header id="game-header" class="hidden bg-emerald-600 text-white p-4 sm:px-8 flex flex-wrap justify-between items-center shadow-md">
+            <div class="flex items-center space-x-3">
+                <span class="bg-white/20 px-3 py-1 rounded-full text-xs sm:text-sm font-bold tracking-wider">
+                    <i class="fa-solid fa-user-astronaut mr-1"></i> <span id="player-name-display">小探險家</span>
+                </span>
+                <span class="bg-white/20 px-3 py-1 rounded-full text-xs sm:text-sm font-bold tracking-wider">
+                    <i class="fa-solid fa-map-location-dot mr-1"></i> <span id="stage-title-nav">第 1 關</span>
+                </span>
+                <div id="lives-container" class="flex space-x-1 text-red-400 text-lg sm:text-xl">
+                    <i class="fa-solid fa-heart animate-bounce"></i>
+                    <i class="fa-solid fa-heart animate-bounce"></i>
+                    <i class="fa-solid fa-heart animate-bounce"></i>
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-4 mt-2 sm:mt-0">
+                <div class="text-right">
+                    <span class="text-xs text-emerald-100 block">獲得探險積分</span>
+                    <span id="score-text" class="text-xl sm:text-2xl font-black text-yellow-300">0</span>
+                </div>
+                <button id="sound-btn" onclick="toggleSound()" class="bg-emerald-700 hover:bg-emerald-800 w-10 h-10 rounded-full flex items-center justify-center transition">
+                    <i id="sound-icon" class="fa-solid fa-volume-high"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- 遊戲進度條 -->
+        <div id="progress-bar-container" class="hidden w-full bg-emerald-900/20 h-2.5">
+            <div id="progress-bar" class="bg-gradient-to-r from-yellow-400 to-emerald-400 h-2.5 transition-all duration-300 w-0"></div>
+        </div>
+
+        <!-- 內容呈現區域 -->
+        <main id="main-content" class="flex-1 p-5 sm:p-8 flex flex-col justify-center items-center overflow-y-auto custom-scrollbar">
+            
+            <!-- 畫面1：遊戲主頁 / 歡迎介面 -->
+            <div id="view-start" class="text-center max-w-xl py-4 flex flex-col items-center relative w-full">
+                <!-- 教師專區入口按鈕 -->
+                <button onclick="openTeacherModal()" class="absolute top-0 right-0 text-xs font-bold bg-slate-200 hover:bg-slate-300 text-slate-700 px-3 py-1.5 rounded-full transition flex items-center z-10">
+                    <i class="fa-solid fa-user-tie mr-1"></i> 教師專區
+                </button>
+
+                <!-- 動態隊長吉祥物與對話框動畫區域 -->
+                <div class="flex flex-col sm:flex-row items-center justify-center gap-4 mb-5 w-full mt-4 sm:mt-2 px-2">
+                    <!-- 吉祥物角色 (帶浮動與點擊互動) -->
+                    <div onclick="triggerMascotSpeak()" class="relative cursor-pointer group flex-shrink-0" title="點擊切換隊長對話！">
+                        <div class="w-24 h-24 sm:w-28 sm:h-28 bg-gradient-to-tr from-emerald-400 to-teal-300 text-white rounded-full flex items-center justify-center shadow-lg border-4 border-white animate-bounce-gentle transform group-hover:scale-105 transition">
+                            <i class="fa-solid fa-user-astronaut text-4xl sm:text-5xl"></i>
+                        </div>
+                        <span class="absolute -bottom-1 left-1/2 transform -translate-x-1/2 bg-amber-400 text-slate-900 text-[10px] font-black px-2 py-0.5 rounded-full shadow whitespace-nowrap group-hover:bg-amber-300 transition">
+                            點我對話 💬
+                        </span>
+                    </div>
+
+                    <!-- 漫畫對話框 (打字機與氣泡動畫) -->
+                    <div onclick="triggerMascotSpeak()" class="relative bg-white border-2 border-emerald-400 rounded-2xl p-4 shadow-md max-w-sm w-full text-left cursor-pointer hover:border-emerald-500 transition">
+                        <!-- 對話框箭頭 (響應式) -->
+                        <div class="hidden sm:block absolute -left-2.5 top-1/2 transform -translate-y-1/2 w-0 h-0 border-t-8 border-t-transparent border-r-8 border-r-emerald-400 border-b-8 border-b-transparent"></div>
+                        <div class="sm:hidden absolute -top-2.5 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-8 border-l-transparent border-b-8 border-b-emerald-400 border-r-8 border-r-transparent"></div>
+                        
+                        <div class="flex items-center justify-between mb-1.5">
+                            <span class="text-xs font-black text-emerald-600 flex items-center">
+                                <i class="fa-solid fa-robot mr-1"></i> 探險隊長 綠綠博士
+                            </span>
+                            <span id="dialogue-counter" class="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-bold">
+                                1 / 3
+                            </span>
+                        </div>
+                        <p id="mascot-dialogue-text" class="text-sm font-bold text-slate-700 min-h-[48px] flex items-center leading-relaxed typing-cursor">
+                            <!-- 動態打字內容將由 JS 呈現 -->
+                        </p>
+                    </div>
+                </div>
+
+                <h1 class="text-3xl sm:text-4xl font-black text-emerald-800 mb-2 tracking-wide">
+                    自然科學探險王！
+                </h1>
+                <p class="text-slate-600 text-xs sm:text-sm mb-5 leading-relaxed">
+                    歡迎來到臺北市民權國小三年級自然科學期中考冒險樂園！<br>
+                    快穿上探險裝備，挑戰 5 大關卡，解開植物、磁鐵與力的神祕密碼吧！
+                </p>
+
+                <!-- 學生姓名輸入框與開始按鈕 -->
+                <div class="w-full max-w-xs mb-4 flex flex-col gap-1.5">
+                    <label for="student-name-input" class="text-xs font-bold text-emerald-800 text-left block pl-1">
+                        <i class="fa-solid fa-pen-clip mr-1"></i> 請輸入探險家姓名：
+                    </label>
+                    <input type="text" id="student-name-input" placeholder="例如：王小明" 
+                           class="w-full px-4 py-2.5 rounded-xl border-2 border-emerald-300 focus:border-emerald-500 focus:outline-none text-center font-bold text-slate-800 bg-white/90 shadow-inner">
+                </div>
+
+                <button onclick="startGame()" class="btn-bounce bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-black text-lg px-8 py-3.5 rounded-full shadow-lg border-2 border-white flex items-center justify-center space-x-2 w-full max-w-xs">
+                    <span>開始探險闖關</span>
+                    <i class="fa-solid fa-rocket"></i>
+                </button>
+            </div>
+
+            <!-- 畫面2：關卡選擇地圖 -->
+            <div id="view-map" class="hidden w-full max-w-2xl py-4">
+                <h2 class="text-2xl font-black text-center text-emerald-800 mb-6 flex items-center justify-center">
+                    <i class="fa-solid fa-map mr-2"></i> 選擇探險關卡
+                </h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" id="map-nodes">
+                    <!-- 地圖節點將由 JS 動態渲染 -->
+                </div>
+            </div>
+
+            <!-- 畫面3：題目闖關畫面 -->
+            <div id="view-question" class="hidden w-full max-w-2xl">
+                <!-- 題號標籤與領域 -->
+                <div class="flex justify-between items-center mb-4">
+                    <span id="question-tag" class="bg-emerald-100 text-emerald-800 font-bold px-3 py-1 rounded-full text-xs">
+                        植物特徵
+                    </span>
+                    <span id="question-number" class="text-slate-400 text-xs font-bold">
+                        第 1 / 5 題
+                    </span>
+                </div>
+
+                <!-- 題目描述 -->
+                <h3 id="question-text" class="text-lg sm:text-xl font-bold text-slate-800 mb-6 leading-snug">
+                    題目載入中...
+                </h3>
+
+                <!-- 題目圖片 / 示意圖顯示區 (如果有) -->
+                <div id="question-image-container" class="hidden mb-6 flex justify-center">
+                    <div id="question-illustration" class="p-4 bg-slate-50 border-2 border-slate-200 rounded-2xl max-w-md w-full text-center">
+                        <!-- 圖形動態插入 -->
+                    </div>
+                </div>
+
+                <!-- 選項按鈕區 (單選題 / 是非題) -->
+                <div id="options-container" class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    <!-- 選項將由 JS 動態生成 -->
+                </div>
+
+                <!-- 配對/連連看題專用區 (如有) -->
+                <div id="matching-container" class="hidden space-y-4">
+                    <!-- 連連看題介面 -->
+                </div>
+            </div>
+
+            <!-- 畫面4：單題解析與回饋彈窗 -->
+            <div id="feedback-modal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl border-4 border-slate-100 text-center transform transition-all scale-100">
+                    <div id="feedback-icon" class="w-20 h-20 mx-auto rounded-full flex items-center justify-center text-4xl mb-4">
+                        <i class="fa-solid fa-check"></i>
+                    </div>
+                    <h3 id="feedback-title" class="text-2xl font-black mb-2">答對了！</h3>
+                    <p id="feedback-desc" class="text-slate-600 mb-6 text-sm sm:text-base leading-relaxed">
+                        解析說明內容...
+                    </p>
+                    <button onclick="nextQuestion()" class="btn-bounce bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-lg px-8 py-3 rounded-full shadow-md w-full">
+                        下一題 <i class="fa-solid fa-arrow-right ml-1"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 畫面5：結算 / 獲勝通關畫面 -->
+            <div id="view-result" class="hidden text-center max-w-lg py-6">
+                <div class="w-28 h-28 mx-auto bg-amber-100 text-amber-500 rounded-full flex items-center justify-center text-6xl mb-4 shadow-lg animate-bounce">
+                    <i id="result-badge-icon" class="fa-solid fa-trophy"></i>
+                </div>
+                <h2 class="text-3xl font-black text-slate-800 mb-1" id="result-title">恭喜完成探險！</h2>
+                <p id="result-player-name" class="text-emerald-700 font-bold text-lg mb-4">探險家：小探險家</p>
+
+                <div class="bg-slate-50 border-2 border-slate-200 rounded-2xl p-5 mb-6 text-left space-y-3">
+                    <div class="flex justify-between items-center text-sm font-bold">
+                        <span class="text-slate-500"><i class="fa-solid fa-star text-amber-400 mr-2"></i>總獲得積分：</span>
+                        <span id="final-score" class="text-2xl font-black text-emerald-600">0</span>
+                    </div>
+                    <div class="flex justify-between items-center text-sm font-bold">
+                        <span class="text-slate-500"><i class="fa-solid fa-award text-blue-400 mr-2"></i>探險家稱號：</span>
+                        <span id="final-badge" class="text-lg font-black text-purple-600">自然小博士</span>
+                    </div>
+                    <div class="flex justify-between items-center text-sm font-bold">
+                        <span class="text-slate-500"><i class="fa-solid fa-bullseye text-red-400 mr-2"></i>答對率：</span>
+                        <span id="final-accuracy" class="text-lg font-bold text-slate-700">100%</span>
+                    </div>
+                </div>
+
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <button onclick="restartGame()" class="btn-bounce flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 px-6 rounded-full shadow-md">
+                        <i class="fa-solid fa-rotate-right mr-1"></i> 重新挑戰
+                    </button>
+                    <button onclick="showReviewScreen()" class="btn-bounce flex-1 bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-full shadow-md">
+                    <i class="fa-solid fa-book-open mr-1"></i> 查看錯題與重點
+                </button>
+            </div>
+
+            <!-- 新增：雲端試算表同步狀態標籤 -->
+            <div id="sync-status-box" class="mt-4 hidden p-3 rounded-xl border text-xs font-bold transition-all text-center">
+                <i id="sync-icon" class="fa-solid fa-spinner fa-spin mr-1"></i>
+                <span id="sync-text">正在將成績同步上傳至 Google 試算表...</span>
+            </div>
+        </div>
+
+        <!-- 畫面6：試題總複習/解析本 -->
+            <div id="view-review" class="hidden w-full max-w-2xl text-left">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-black text-emerald-800">
+                        <i class="fa-solid fa-book-bookmark mr-2"></i> 全考題重點複習筆記
+                    </h2>
+                    <button onclick="showMapScreen()" class="text-sm bg-slate-200 hover:bg-slate-300 px-4 py-2 rounded-full font-bold text-slate-700">
+                        返回關卡
+                    </button>
+                </div>
+
+                <div id="review-list" class="space-y-4 max-h-[450px] overflow-y-auto custom-scrollbar pr-2">
+                    <!-- JS 動態生成複習內容 -->
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- 新增：教師管理 Modal -->
+    <div id="teacher-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl border-4 border-slate-100 text-center">
+            <div class="w-16 h-16 mx-auto bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-3xl mb-3">
+                <i class="fa-solid fa-user-gear"></i>
+            </div>
+            <h3 class="text-2xl font-black text-slate-800 mb-1">教師管理專區</h3>
+            <p class="text-xs text-slate-500 mb-4">密碼：<span class="font-mono bg-slate-100 px-2 py-0.5 rounded text-purple-700 font-bold">Scps 52112</span></p>
+
+            <!-- 密碼輸入框 -->
+            <div id="teacher-auth-box" class="space-y-4">
+                <input type="password" id="teacher-pwd-input" placeholder="請輸入教師密碼" 
+                    class="w-full px-4 py-2.5 rounded-xl border-2 border-slate-300 focus:border-purple-500 focus:outline-none text-center font-bold text-slate-800">
+                <div class="flex gap-2">
+                    <button onclick="closeTeacherModal()" class="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-2.5 rounded-xl">
+                        取消
+                    </button>
+                    <button onclick="verifyTeacherPassword()" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-bold py-2.5 rounded-xl shadow">
+                        驗證登入
+                    </button>
+                </div>
+            </div>
+
+            <!-- 驗證成功後的控制面板 -->
+            <div id="teacher-controls" class="hidden space-y-3 text-left">
+                <div class="bg-purple-50 p-3 rounded-xl border border-purple-200 text-xs text-purple-800 mb-3">
+                    <i class="fa-solid fa-circle-check mr-1"></i> 已順利進入教師模式！
+                </div>
+
+                <!-- Google 試算表 API 設定區 -->
+                <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-2">
+                    <label class="text-xs font-bold text-slate-700 block flex items-center justify-between">
+                        <span><i class="fa-solid fa-file-csv text-emerald-600 mr-1"></i> Google 試算表 Web App URL</span>
+                        <button onclick="showGasScriptGuide()" class="text-[10px] bg-purple-100 text-purple-700 hover:bg-purple-200 px-2 py-0.5 rounded">查看後端語法</button>
+                    </label>
+                    <input type="url" id="gas-url-input" placeholder="https://script.google.com/macros/s/.../exec" 
+                        class="w-full text-xs p-2 rounded-lg border border-slate-300 font-mono text-slate-700 focus:outline-none focus:border-purple-500">
+                    <button onclick="saveGasUrl()" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs py-1.5 rounded-lg transition">
+                        儲存試算表 API 網址
+                    </button>
+                </div>
+
+                <button onclick="teacherUnlockAllStages()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2.5 px-4 rounded-xl flex items-center justify-between shadow text-sm">
+                    <span><i class="fa-solid fa-lock-open mr-2"></i> 一鍵解鎖所有關卡</span>
+                    <i class="fa-solid fa-chevron-right text-xs"></i>
+                </button>
+                <button onclick="teacherViewAllNotes()" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2.5 px-4 rounded-xl flex items-center justify-between shadow text-sm">
+                    <span><i class="fa-solid fa-book mr-2"></i> 直接查看考題與解答</span>
+                    <i class="fa-solid fa-chevron-right text-xs"></i>
+                </button>
+                <button onclick="closeTeacherModal()" class="w-full bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-2 rounded-xl text-center text-sm">
+                    關閉管理視窗
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /* -------------------------------------------------------------------------- */
+        /*                          1. 音效系統 (Web Audio API)                         */
+        /* -------------------------------------------------------------------------- */
+        let soundEnabled = true;
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new AudioCtx();
+            }
+        }
+
+        function playSound(type) {
+            if (!soundEnabled) return;
+            initAudio();
+            if (!audioCtx) return;
+
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            const now = audioCtx.currentTime;
+
+            if (type === 'correct') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(523.25, now); // C5
+                osc.frequency.setValueAtTime(659.25, now + 0.1); // E5
+                osc.frequency.setValueAtTime(783.99, now + 0.2); // G5
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+                osc.start(now);
+                osc.stop(now + 0.4);
+            } else if (type === 'wrong') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(220, now); // A3
+                osc.frequency.setValueAtTime(164.81, now + 0.15); // E3
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+                osc.start(now);
+                osc.stop(now + 0.35);
+            } else if (type === 'win') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(440, now);
+                osc.frequency.setValueAtTime(554.37, now + 0.1);
+                osc.frequency.setValueAtTime(659.25, now + 0.2);
+                osc.frequency.setValueAtTime(880, now + 0.3);
+                gain.gain.setValueAtTime(0.4, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
+                osc.start(now);
+                osc.stop(now + 0.6);
+            }
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            const icon = document.getElementById('sound-icon');
+            if (soundEnabled) {
+                icon.className = 'fa-solid fa-volume-high';
+            } else {
+                icon.className = 'fa-solid fa-volume-xmark';
+            }
+        }
+
+        /* -------------------------------------------------------------------------- */
+        /*                          2. 遊戲資料庫 (試卷題庫轉換)                         */
+        /* -------------------------------------------------------------------------- */
+        const STAGES = [
+            {
+                id: 1,
+                name: "植物王國秘密",
+                icon: "fa-seedling",
+                color: "emerald",
+                bgGradient: "from-emerald-500 to-teal-600",
+                description: "探討植物根、莖、葉、花、果實與種子的奧祕！",
+                questions: [
+                    {
+                        type: "tf",
+                        tag: "植物與生活",
+                        question: "植物供我們食用、製作衣服、美化環境，這些都證明植物與人類生活很有關聯。",
+                        answer: true,
+                        rationale: "正確！植物提供糧食（米、蔬果）、衣物纖維（棉花）及美化環境，對人類生活非常重要。"
+                    },
+                    {
+                        type: "tf",
+                        tag: "植物吸收水",
+                        question: "把植物連根放入裝水的寶特瓶封好口，過幾天瓶內水量變少，是因為瓶子漏水了。",
+                        answer: false,
+                        rationale: "錯誤！水量變少是因為植物的「根」吸收了水分，並由莖輸送至全身。"
+                    },
+                    {
+                        type: "tf",
+                        tag: "植物構造與葉序",
+                        question: "所有植物的莖或枝條上，都是同一個節只長出一片葉子，而且一左一右交錯生長。",
+                        answer: false,
+                        rationale: "錯誤！這屬於「互生」。有些植物是每節長兩片葉子（對生）或長三片以上（輪生）。"
+                    },
+                    {
+                        type: "choice",
+                        tag: "植物葉序",
+                        question: "桂花每節都是「左長1片、右長1片葉子」，請問它的葉序屬於哪一種？",
+                        options: ["輪生", "互生", "對生", "叢生"],
+                        answer: 2,
+                        rationale: "對生植物在同一節上會兩兩對稱長出兩片葉子（例如桂花、日日春）。"
+                    },
+                    {
+                        type: "choice",
+                        tag: "觀察安全",
+                        question: "觀察花朵時，不可使用下列哪一個方法，否則容易發生危險？",
+                        options: ["用手摸一摸花瓣", "用眼睛觀察顏色", "用鼻子聞一聞氣味", "用嘴巴嘗嘗花朵味道"],
+                        answer: 3,
+                        rationale: "有些野生花朵包含毒性，絕對不可任意放入嘴巴嘗味道！"
+                    },
+                    {
+                        type: "choice",
+                        tag: "開花季節",
+                        question: "請問下列哪一種花朵，主要是在「冬天」時開花呢？",
+                        options: ["荷花 (夏季)", "杜鵑花 (春季)", "臺灣欒樹 (秋季)", "梅花 (冬季)"],
+                        answer: 3,
+                        rationale: "「越冷越開花」的梅花盛開於冬季；荷花夏開、杜鵑春開。"
+                    },
+                    {
+                        type: "choice",
+                        tag: "葉脈與葉緣",
+                        question: "觀察百合花的葉子，請問百合葉的葉脈與葉緣分別是什麼特徵？",
+                        options: [
+                            "網狀脈，葉緣鋸齒狀",
+                            "網狀脈，葉緣平滑狀",
+                            "平行脈，葉緣平滑狀",
+                            "平行脈，葉緣鋸齒狀"
+                        ],
+                        answer: 2,
+                        rationale: "百合屬單子葉植物，葉片呈現線形「平行脈」，且葉緣圓滑無鋸齒（平滑狀）。"
+                    }
+                ]
+            },
+            {
+                id: 2,
+                name: "磁鐵魔力陣",
+                icon: "fa-magnet",
+                color: "blue",
+                bgGradient: "from-blue-500 to-indigo-600",
+                description: "探索磁鐵相吸相斥、磁力強弱與生活應用的神奇現象！",
+                questions: [
+                    {
+                        type: "tf",
+                        tag: "磁性材質",
+                        question: "帶有磁鐵的棋子（如跳棋），可以直接吸附在木製的棋盤上。",
+                        answer: false,
+                        rationale: "錯誤！磁鐵只能吸附鐵製品（或鎳、鈷），木頭不具備磁性無法被吸引。"
+                    },
+                    {
+                        type: "choice",
+                        tag: "磁極特性",
+                        question: "用一塊棒狀磁鐵隔著透明塑膠袋吸引鐵粉，鐵粉會呈現什麼分布現象？",
+                        options: ["鐵粉完全沒被吸引", "鐵粉集中在磁鐵兩端", "鐵粉平均分布在磁鐵上", "鐵粉都集中在磁鐵中間"],
+                        answer: 1,
+                        rationale: "磁鐵的磁力在兩端（N極與S極）最強，稱為磁極，因此鐵粉會大量集中於兩端！"
+                    },
+                    {
+                        type: "choice",
+                        tag: "生活磁鐵應用",
+                        question: "下列生活中的物品，哪一項「沒有」運用到磁鐵？",
+                        options: ["一般標準籃球", "磁吸式鉛筆盒", "背包的磁扣", "門防撞門檔"],
+                        answer: 0,
+                        rationale: "籃球依靠橡膠摩擦力與空氣彈力，並沒有使用磁鐵結構。"
+                    },
+                    {
+                        type: "choice",
+                        tag: "磁極相互作用",
+                        question: "當我們將兩個磁鐵靠近，若出現「S極對著S極」時，會發生什麼現象？",
+                        options: ["互相吸引緊貼", "互相排斥推開", "磁力完全消失", "產生旋轉"],
+                        answer: 1,
+                        rationale: "磁鐵特性為「同極相斥、異極相吸」，S與S極相同故會互相排斥！"
+                    },
+                    {
+                        type: "choice",
+                        tag: "磁力大小比較",
+                        question: "甲磁鐵吸了 4 個迴紋針，乙磁鐵吸了 2 個迴紋針，請問哪一個磁鐵磁力較大？",
+                        options: ["甲磁鐵磁力較大", "乙磁鐵磁力較大", "兩個磁力一樣大", "無法比較"],
+                        answer: 0,
+                        rationale: "在相同條件下，能吸引越自重或越多數量的鐵製品（迴紋針），代表磁力越強！"
+                    }
+                ]
+            },
+            {
+                id: 3,
+                name: "力的魔法學堂",
+                icon: "fa-hand-fist",
+                color: "amber",
+                bgGradient: "from-amber-500 to-orange-600",
+                description: "認識力的三要素、力的效果（形變與運動）！",
+                questions: [
+                    {
+                        type: "tf",
+                        tag: "受力判斷",
+                        question: "我們可以藉由物體形狀改變的程度，或物體移動的距離來判斷物體受力的大小。",
+                        answer: true,
+                        rationale: "正確！受力越大，彈性體形變越明顯或物體被推動移動得越遠。"
+                    },
+                    {
+                        type: "tf",
+                        tag: "力的彈性恢復",
+                        question: "施力在物體上使其改變形狀後，只要我們停止施力，任何物體都能恢復原狀。",
+                        answer: false,
+                        rationale: "錯誤！只有像橡皮筋、彈簧等具備彈性物品才能恢復；像塑膠泥、鋁罐受力後無法自動恢復。"
+                    },
+                    {
+                        type: "tf",
+                        tag: "力的作用特徵",
+                        question: "用手用力推牆壁時，牆壁沒有移動也沒有改變形狀，代表手完全沒有對牆壁施力。",
+                        answer: false,
+                        rationale: "錯誤！手確實有對牆壁施力，只是牆壁結構非常堅固，形變極微小且無法被推動。"
+                    },
+                    {
+                        type: "choice",
+                        tag: "抗擠壓形變",
+                        question: "下列哪一個物體受到手部擠壓時，形狀最「不會」有明顯變化？",
+                        options: ["彩色膠泥", "皮球", "木製黑板", "空鋁罐"],
+                        answer: 2,
+                        rationale: "黑板結構硬度高，一般人力擠壓下極難觀察到顯著形變。"
+                    },
+                    {
+                        type: "choice",
+                        tag: "施力方向",
+                        question: "當我們把躲避球向上拋向天空時，手對球離開瞬間的施力方向是什麼？",
+                        options: ["向上", "向下", "向左", "向後"],
+                        answer: 0,
+                        rationale: "把球拋向天空，施加的力量方向當然是「向上」推動球體！"
+                    },
+                    {
+                        type: "choice",
+                        tag: "力的作用效果",
+                        question: "用腳把飛過來的足球加速傳給遠方的隊友，這屬於力的哪一種作用效果？",
+                        options: ["物體形狀改變", "物體改變運動狀態", "物體質量增加", "物體產生磁性"],
+                        answer: 1,
+                        rationale: "踢球改變了球的速度與方向，屬於改變物體的「運動狀態」。"
+                    }
+                ]
+            },
+            {
+                id: 4,
+                name: "浮沉與水能冒險",
+                icon: "fa-water",
+                color: "cyan",
+                bgGradient: "from-cyan-500 to-blue-600",
+                description: "解開水的作用力、物體浮與沉的變幻奧祕！",
+                questions: [
+                    {
+                        type: "choice",
+                        tag: "浮力應用",
+                        question: "下列生活中的事物，哪一項是利用「水能讓物體浮起來」的浮力特性？",
+                        options: [
+                            "玩水時使用的水上浮板",
+                            "用水槍射倒空罐子",
+                            "流動的水推動大水車轉動",
+                            "用水洗滌水果皮"
+                        ],
+                        answer: 0,
+                        rationale: "浮板能支撐身體浮在水面上，正是利用水的「浮力」原理！"
+                    },
+                    {
+                        type: "choice",
+                        tag: "形狀與浮沉",
+                        question: "同一塊黏土（膠泥），捏成什麼形狀放入水中時，最容易浮在水面上？",
+                        options: [
+                            "捏成實心球狀",
+                            "捏成實心長條狀",
+                            "捏成凹槽中空的碗盒狀",
+                            "壓成薄薄的平整實心餅狀"
+                        ],
+                        answer: 2,
+                        rationale: "捏成凹槽盒狀能排除更多水、增加排開水的體積，從而獲得足夠浮力浮在水面！"
+                    },
+                    {
+                        type: "choice",
+                        tag: "物體浮沉判定",
+                        question: "下列哪一種常見物品直接放入水中時，通常會直接沉入水底？",
+                        options: ["實心橡皮擦", "空寶特瓶", "保麗龍塊", "充氣游泳圈"],
+                        answer: 0,
+                        rationale: "實心橡皮擦密度比水大且無法排開足夠的水，會沉入水底。"
+                    },
+                    {
+                        type: "choice",
+                        tag: "力的種類連連看",
+                        question: "釣魚時「釣竿上的浮標能浮在水面上」，這是運用了哪一種力？",
+                        options: ["風力", "磁力", "彈力", "浮力"],
+                        answer: 3,
+                        rationale: "浮標內部充氣或使用輕質材質，依靠水的「浮力」支撐浮於水面。"
+                    }
+                ]
+            },
+            {
+                id: 5,
+                name: "綜合大挑戰",
+                icon: "fa-trophy",
+                color: "purple",
+                bgGradient: "from-purple-500 to-pink-600",
+                description: "終極自然科學大檢測，驗證你的科學真本事！",
+                questions: [
+                    {
+                        type: "choice",
+                        tag: "生物判斷",
+                        question: "下列哪一個屬於能夠生長、繁殖且需要養分的「生物」？",
+                        options: ["公園石頭", "野外白頭翁", "木製課桌椅", "塑膠水壺"],
+                        answer: 1,
+                        rationale: "白頭翁是鳥類動物，會代謝、生長與繁殖，屬於生物。"
+                    },
+                    {
+                        type: "choice",
+                        tag: "莖的種類",
+                        question: "樟樹的莖高大堅硬，請問它屬於哪一種類型的莖？",
+                        options: ["木本莖", "草本莖", "藤本莖", "水生莖"],
+                        answer: 0,
+                        rationale: "樟樹、榕樹等木質部發達、質地堅硬的樹幹屬於「木本莖」。"
+                    },
+                    {
+                        type: "choice",
+                        tag: "磁鐵懸浮實驗",
+                        question: "將甲磁鐵靠近試管底部的乙磁鐵時，乙磁鐵向上升高懸浮，原因是什麼？",
+                        options: [
+                            "面對面磁極相同，同極相斥將乙推高",
+                            "面對面磁極不同，異極相吸將乙拉高",
+                            "試管內部產生了向上風力",
+                            "磁鐵受到了水的浮力推升"
+                        ],
+                        answer: 0,
+                        rationale: "當兩個磁鐵同極相對（N對N或S對S）時，同極相斥產生的排斥力會把上方磁鐵向上頂高！"
+                    },
+                    {
+                        type: "choice",
+                        tag: "果實與種子",
+                        question: "下列哪一組植物構造中，果實的主要功能是什麼？",
+                        options: ["爭取陽光製造養分", "吸收水分與礦物質", "保護種子並協助傳播", "固定植物身體"],
+                        answer: 2,
+                        rationale: "果實包裹在種子外圍，主要功能是「保護種子」並吸引動物採食傳播。"
+                    }
+                ]
+            }
+        ];
+
+        /* -------------------------------------------------------------------------- */
+        /*                          3. 遊戲狀態與控制邏輯                               */
+        /* -------------------------------------------------------------------------- */
+        let gameState = {
+            studentName: "小探險家",
+            currentStageIdx: 0,
+            currentQuestionIdx: 0,
+            lives: 3,
+            score: 0,
+            totalCorrect: 0,
+            totalAnswered: 0,
+            unlockedStages: [true, false, false, false, false],
+            userAnswersHistory: []
+        };
+
+        // Google 試算表 Web App URL (本地記錄)
+        let gasApiUrl = localStorage.getItem('gas_api_url') || 'https://script.google.com/macros/s/AKfycbwec8feWkamPmSLznS3F9MDApVBE-udQZqD2zjZHuSZVE0dCUvJylCtLFq5xMPrNlp2/exec';
+
+        // 啟動遊戲
+        function startGame() {
+            initAudio();
+            
+            // 讀取學生姓名
+            const nameInput = document.getElementById('student-name-input').value.trim();
+            gameState.studentName = nameInput.length > 0 ? nameInput : "小探險家";
+
+            document.getElementById('view-start').classList.add('hidden');
+            document.getElementById('game-header').classList.remove('hidden');
+            document.getElementById('progress-bar-container').classList.remove('hidden');
+            showMapScreen();
+        }
+
+        /* -------------------------------------------------------------------------- */
+        /*                          4. 教師專區與 Google 試算表整合                    */
+        /* -------------------------------------------------------------------------- */
+        const TEACHER_PASSWORD = "Scps 52112";
+
+        function openTeacherModal() {
+            document.getElementById('teacher-modal').classList.remove('hidden');
+            document.getElementById('teacher-auth-box').classList.remove('hidden');
+            document.getElementById('teacher-controls').classList.add('hidden');
+            document.getElementById('teacher-pwd-input').value = '';
+            document.getElementById('gas-url-input').value = gasApiUrl;
+        }
+
+        function closeTeacherModal() {
+            document.getElementById('teacher-modal').classList.add('hidden');
+        }
+
+        function verifyTeacherPassword() {
+            const inputPwd = document.getElementById('teacher-pwd-input').value.trim();
+            if (inputPwd === TEACHER_PASSWORD) {
+                document.getElementById('teacher-auth-box').classList.add('hidden');
+                document.getElementById('teacher-controls').classList.remove('hidden');
+            } else {
+                alert("密碼錯誤！請重新輸入正確密碼。");
+            }
+        }
+
+        function saveGasUrl() {
+            const url = document.getElementById('gas-url-input').value.trim();
+            gasApiUrl = url;
+            localStorage.setItem('gas_api_url', url);
+            alert("✅ Google 試算表 Web App API 網址已成功設定並儲存！");
+        }
+
+        function showGasScriptGuide() {
+            const scriptCode = `function doPost(e) {
+  var lock = LockService.getScriptLock();
+  lock.tryLock(10000); // 避免多名學生同時交卷造成寫入衝突
+  try {
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+    // 若試算表為全新空白，自動新增第一行欄位標頭
+    if (sheet.getLastRow() === 0) {
+      sheet.appendRow(["提交時間", "學生姓名", "獲得積分", "答對率", "獲得稱號"]);
+    }
+    
+    // 解析前端傳入的 JSON 數據
+    var data = JSON.parse(e.postData.contents);
+    sheet.appendRow([
+      new Date(),
+      data.studentName,
+      data.score,
+      data.accuracy + '%',
+      data.badge
+    ]);
+    return ContentService.createTextOutput(JSON.stringify({result: 'success'}))
+                         .setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    return ContentService.createTextOutput(JSON.stringify({result: 'error', error: err.toString()}))
+                         .setMimeType(ContentService.MimeType.JSON);
+  } finally {
+    lock.releaseLock();
+  }
+}`;
+            prompt("請將以下修復與強化後的 Google Apps Script (GAS) 程式碼複製貼上至試算表的【擴充功能】->【Apps Script】：", scriptCode);
+        }
+
+        function teacherUnlockAllStages() {
+            gameState.unlockedStages = [true, true, true, true, true];
+            alert("🔓 已成功解鎖所有 5 大探險關卡！");
+            closeTeacherModal();
+            showMapScreen();
+        }
+
+        function teacherViewAllNotes() {
+            closeTeacherModal();
+            document.getElementById('view-start').classList.add('hidden');
+            document.getElementById('game-header').classList.remove('hidden');
+            showReviewScreen();
+        }
+
+        // 顯示關卡地圖
+        function showMapScreen() {
+            hideAllViews();
+            document.getElementById('view-map').classList.remove('hidden');
+            renderMapNodes();
+            updateHeader();
+        }
+
+        // 渲染地圖節點
+        function renderMapNodes() {
+            const container = document.getElementById('map-nodes');
+            container.innerHTML = '';
+
+            STAGES.forEach((stage, idx) => {
+                const isUnlocked = gameState.unlockedStages[idx];
+                const isCompleted = gameState.unlockedStages[idx + 1] || (idx === STAGES.length - 1 && gameState.currentQuestionIdx >= stage.questions.length && isUnlocked);
+
+                const card = document.createElement('div');
+                card.className = `p-5 rounded-3xl border-3 transition-all flex flex-col justify-between ${
+                    isUnlocked 
+                        ? 'bg-white border-' + stage.color + '-400 shadow-lg cursor-pointer hover:scale-105' 
+                        : 'bg-slate-100 border-slate-300 opacity-60 cursor-not-allowed'
+                }`;
+
+                card.innerHTML = `
+                    <div>
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="w-12 h-12 rounded-2xl bg-${stage.color}-100 text-${stage.color}-600 flex items-center justify-center text-2xl font-black">
+                                <i class="fa-solid ${stage.icon}"></i>
+                            </span>
+                            ${isUnlocked 
+                                ? `<span class="px-3 py-1 bg-${stage.color}-50 text-${stage.color}-700 rounded-full text-xs font-bold">
+                                    ${isCompleted ? '✓ 已通關' : '可挑戰'}
+                                   </span>`
+                                : `<span class="px-3 py-1 bg-slate-200 text-slate-500 rounded-full text-xs font-bold">
+                                    <i class="fa-solid fa-lock mr-1"></i> 未解鎖
+                                   </span>`
+                            }
+                        </div>
+                        <h3 class="text-xl font-black text-slate-800 mb-1">${stage.name}</h3>
+                        <p class="text-xs text-slate-500 mb-4">${stage.description}</p>
+                    </div>
+                    <div>
+                        <button ${isUnlocked ? `onclick="enterStage(${idx})"` : 'disabled'} 
+                            class="w-full py-2.5 rounded-xl font-bold text-sm text-white bg-gradient-to-r ${stage.bgGradient} shadow-md transition">
+                            ${isUnlocked ? (isCompleted ? '再次闖關' : '開始挑戰') : '鎖定中'}
+                        </button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // 進入關卡
+        function enterStage(stageIdx) {
+            gameState.currentStageIdx = stageIdx;
+            gameState.currentQuestionIdx = 0;
+            hideAllViews();
+            document.getElementById('view-question').classList.remove('hidden');
+            loadQuestion();
+        }
+
+        // 載入題目
+        function loadQuestion() {
+            const stage = STAGES[gameState.currentStageIdx];
+            const q = stage.questions[gameState.currentQuestionIdx];
+
+            // 更新頁頭
+            document.getElementById('stage-title-nav').innerText = `${stage.name}`;
+            document.getElementById('question-tag').innerText = q.tag || stage.name;
+            document.getElementById('question-number').innerText = `第 ${gameState.currentQuestionIdx + 1} / ${stage.questions.length} 題`;
+
+            // 進度條
+            const progress = ((gameState.currentQuestionIdx) / stage.questions.length) * 100;
+            document.getElementById('progress-bar').style.width = `${progress}%`;
+
+            // 題目文字
+            document.getElementById('question-text').innerText = q.question;
+
+            // 清空舊選項
+            const optsContainer = document.getElementById('options-container');
+            optsContainer.innerHTML = '';
+            document.getElementById('question-image-container').classList.add('hidden');
+
+            if (q.type === 'tf') {
+                // 是非題 (O/X)
+                optsContainer.className = "grid grid-cols-2 gap-4";
+
+                const btnO = createOptionButton("⭕ 正確 (對)", () => checkAnswer(true));
+                const btnX = createOptionButton("❌ 錯誤 (錯)", () => checkAnswer(false));
+
+                optsContainer.appendChild(btnO);
+                optsContainer.appendChild(btnX);
+            } else {
+                // 四選一選擇題
+                optsContainer.className = "grid grid-cols-1 sm:grid-cols-2 gap-3.5";
+
+                q.options.forEach((optText, optIdx) => {
+                    const prefix = ["① ", "② ", "③ ", "④ "][optIdx] || "";
+                    const btn = createOptionButton(prefix + optText, () => checkAnswer(optIdx));
+                    optsContainer.appendChild(btn);
+                });
+            }
+
+            updateHeader();
+        }
+
+        // 建立選項按鈕
+        function createOptionButton(text, onClickHandler) {
+            const btn = document.createElement('button');
+            btn.className = "btn-bounce w-full p-4 bg-slate-50 hover:bg-emerald-50 border-2 border-slate-200 hover:border-emerald-400 rounded-2xl font-bold text-left text-slate-700 hover:text-emerald-800 transition flex items-center justify-between group";
+            btn.innerHTML = `
+                <span>${text}</span>
+                <i class="fa-solid fa-chevron-right text-slate-300 group-hover:text-emerald-500 transition"></i>
+            `;
+            btn.onclick = onClickHandler;
+            return btn;
+        }
+
+        // 檢查答案
+        function checkAnswer(userChoice) {
+            const stage = STAGES[gameState.currentStageIdx];
+            const q = stage.questions[gameState.currentQuestionIdx];
+
+            let isCorrect = false;
+            if (q.type === 'tf') {
+                isCorrect = (userChoice === q.answer);
+            } else {
+                isCorrect = (userChoice === q.answer);
+            }
+
+            gameState.totalAnswered++;
+
+            // 紀錄歷程
+            gameState.userAnswersHistory.push({
+                question: q.question,
+                isCorrect: isCorrect,
+                rationale: q.rationale,
+                stageName: stage.name
+            });
+
+            if (isCorrect) {
+                playSound('correct');
+                gameState.score += 20;
+                gameState.totalCorrect++;
+                showFeedbackModal(true, "答對了！太棒了！", q.rationale);
+            } else {
+                playSound('wrong');
+                gameState.lives = Math.max(0, gameState.lives - 1);
+                showFeedbackModal(false, "差一點點！再接再厲！", q.rationale);
+
+                if (gameState.lives === 0) {
+                    // 生命值用盡
+                    setTimeout(() => {
+                        alert("生命值耗盡！別灰心，讓我們重新補充能量再出發！");
+                        gameState.lives = 3;
+                        showMapScreen();
+                    }, 1200);
+                }
+            }
+        }
+
+        // 顯示解說 Modal
+        function showFeedbackModal(isCorrect, title, desc) {
+            const modal = document.getElementById('feedback-modal');
+            const icon = document.getElementById('feedback-icon');
+            const titleEl = document.getElementById('feedback-title');
+            const descEl = document.getElementById('feedback-desc');
+
+            if (isCorrect) {
+                icon.className = "w-20 h-20 mx-auto rounded-full flex items-center justify-center text-4xl mb-4 bg-emerald-100 text-emerald-600";
+                icon.innerHTML = '<i class="fa-solid fa-circle-check"></i>';
+                titleEl.className = "text-2xl font-black mb-2 text-emerald-600";
+            } else {
+                icon.className = "w-20 h-20 mx-auto rounded-full flex items-center justify-center text-4xl mb-4 bg-rose-100 text-rose-500";
+                icon.innerHTML = '<i class="fa-solid fa-circle-xmark"></i>';
+                titleEl.className = "text-2xl font-black mb-2 text-rose-600";
+            }
+
+            titleEl.innerText = title;
+            descEl.innerText = desc;
+            modal.classList.remove('hidden');
+        }
+
+        // 切換至下一題
+        function nextQuestion() {
+            document.getElementById('feedback-modal').classList.add('hidden');
+            const stage = STAGES[gameState.currentStageIdx];
+            gameState.currentQuestionIdx++;
+
+            if (gameState.currentQuestionIdx < stage.questions.length) {
+                loadQuestion();
+            } else {
+                // 完成該關卡
+                playSound('win');
+                if (gameState.currentStageIdx + 1 < STAGES.length) {
+                    gameState.unlockedStages[gameState.currentStageIdx + 1] = true;
+                }
+                
+                if (gameState.currentStageIdx === STAGES.length - 1) {
+                    // 全關卡完畢
+                    showResultScreen();
+                } else {
+                    alert(`🎉 恭喜通過「${stage.name}」！下一關卡已成功解鎖！`);
+                    showMapScreen();
+                }
+            }
+        }
+
+        // 結算畫面
+        function showResultScreen() {
+            hideAllViews();
+            document.getElementById('view-result').classList.remove('hidden');
+
+            document.getElementById('result-player-name').innerText = `探險家：${gameState.studentName}`;
+            document.getElementById('final-score').innerText = gameState.score;
+            
+            const accuracy = Math.round((gameState.totalCorrect / Math.max(1, gameState.totalAnswered)) * 100);
+            document.getElementById('final-accuracy').innerText = `${accuracy}%`;
+
+            let badge = "自然小探險家";
+            let badgeIcon = "fa-medal";
+            if (accuracy >= 90) {
+                badge = "🏆 自然科學大博士";
+                badgeIcon = "fa-trophy";
+            } else if (accuracy >= 70) {
+                badge = "🌟 頂尖科學探險家";
+                badgeIcon = "fa-star";
+            } else {
+                badge = "🌱 熱血實習觀察員";
+                badgeIcon = "fa-seedling";
+            }
+
+            document.getElementById('final-badge').innerText = badge;
+            document.getElementById('result-badge-icon').className = `fa-solid ${badgeIcon}`;
+
+            // 自動上傳成績至 Google 試算表
+            uploadScoreToGoogleSheet(accuracy, badge);
+        }
+
+        // 上傳數據至 Google 試算表
+        function uploadScoreToGoogleSheet(accuracy, badge) {
+            const syncBox = document.getElementById('sync-status-box');
+            const syncIcon = document.getElementById('sync-icon');
+            const syncText = document.getElementById('sync-text');
+
+            syncBox.classList.remove('hidden');
+
+            if (!gasApiUrl) {
+                syncBox.className = "mt-4 p-3 rounded-xl border border-amber-200 bg-amber-50 text-amber-800 text-xs font-bold text-center";
+                syncIcon.className = "fa-solid fa-triangle-exclamation text-amber-500 mr-1";
+                syncText.innerText = "尚未設定 Google 試算表 Web App 網址（可由教師專區設定）。";
+                return;
+            }
+
+            syncBox.className = "mt-4 p-3 rounded-xl border border-blue-200 bg-blue-50 text-blue-800 text-xs font-bold text-center";
+            syncIcon.className = "fa-solid fa-spinner fa-spin text-blue-500 mr-1";
+            syncText.innerText = "正在將成績同步上傳至 Google 試算表...";
+
+            const payload = {
+                studentName: gameState.studentName,
+                score: gameState.score,
+                accuracy: accuracy,
+                badge: badge,
+                timestamp: new Date().toISOString()
+            };
+
+            fetch(gasApiUrl, {
+                method: 'POST',
+                mode: 'no-cors', // 避開跨網域限制
+                headers: {
+                    'Content-Type': 'text/plain'
+                },
+                body: JSON.stringify(payload)
+            }).then(() => {
+                syncBox.className = "mt-4 p-3 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-800 text-xs font-bold text-center";
+                syncIcon.className = "fa-solid fa-circle-check text-emerald-500 mr-1";
+                syncText.innerText = "🎉 成績與紀錄已成功上傳至 Google 試算表！";
+            }).catch(err => {
+                syncBox.className = "mt-4 p-3 rounded-xl border border-rose-200 bg-rose-50 text-rose-800 text-xs font-bold text-center";
+                syncIcon.className = "fa-solid fa-circle-xmark text-rose-500 mr-1";
+                syncText.innerText = "連線傳送失敗，請檢查網路或 API 設定。";
+            });
+        }
+
+        // 顯示錯題與總複習筆記
+        function showReviewScreen() {
+            hideAllViews();
+            document.getElementById('view-review').classList.remove('hidden');
+
+            const container = document.getElementById('review-list');
+            container.innerHTML = '';
+
+            let count = 1;
+            STAGES.forEach(stage => {
+                stage.questions.forEach(q => {
+                    const item = document.createElement('div');
+                    item.className = "p-4 bg-white border-2 border-slate-200 rounded-2xl shadow-sm";
+                    
+                    let ansStr = "";
+                    if (q.type === 'tf') {
+                        ansStr = q.answer ? "⭕ 正確" : "❌ 錯誤";
+                    } else {
+                        ansStr = `選 ${["①","②","③","④"][q.answer]}：${q.options[q.answer]}`;
+                    }
+
+                    item.innerHTML = `
+                        <div class="flex items-center space-x-2 mb-2">
+                            <span class="bg-emerald-100 text-emerald-800 text-xs px-2.5 py-0.5 rounded-full font-bold">第 ${count++} 題</span>
+                            <span class="text-xs text-slate-400 font-bold">${stage.name} - ${q.tag}</span>
+                        </div>
+                        <h4 class="font-bold text-slate-800 text-base mb-2">${q.question}</h4>
+                        <div class="text-xs font-bold text-emerald-700 bg-emerald-50 p-2 rounded-lg mb-2">
+                            【正確答案】：${ansStr}
+                        </div>
+                        <p class="text-xs text-slate-600 leading-relaxed bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+                            💡 觀念解析：${q.rationale}
+                        </p>
+                    `;
+                    container.appendChild(item);
+                });
+            });
+        }
+
+        // 重新開始
+        function restartGame() {
+            gameState = {
+                currentStageIdx: 0,
+                currentQuestionIdx: 0,
+                lives: 3,
+                score: 0,
+                totalCorrect: 0,
+                totalAnswered: 0,
+                unlockedStages: [true, false, false, false, false],
+                userAnswersHistory: []
+            };
+            showMapScreen();
+        }
+
+        // 隱藏所有視圖
+        function hideAllViews() {
+            ['view-start', 'view-map', 'view-question', 'view-result', 'view-review'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+        }
+
+        /* -------------------------------------------------------------------------- */
+        /*                          5. 首頁吉祥物對話動畫系統                          */
+        /* -------------------------------------------------------------------------- */
+        const DIALOGUES = [
+            "哈囉！我是探險隊長綠綠博士！歡迎來到自然科學冒險樂園！ 🚀",
+            "這次任務包含植物、磁鐵、力與水能等 5 大關卡，考驗你的科學實力！ 🌱🧲",
+            "請在下方輸入你的姓名，點擊「開始探險闖關」和我一起出發吧！ ⚡"
+        ];
+        let currentDialogueIdx = 0;
+        let typingTimeout = null;
+        let isTyping = false;
+
+        function startDialogueAnimation() {
+            showDialogue(0);
+        }
+
+        function showDialogue(idx) {
+            if (typingTimeout) clearTimeout(typingTimeout);
+            
+            currentDialogueIdx = idx % DIALOGUES.length;
+            const text = DIALOGUES[currentDialogueIdx];
+            const textEl = document.getElementById('mascot-dialogue-text');
+            const counterEl = document.getElementById('dialogue-counter');
+
+            if (!textEl) return;
+
+            counterEl.innerText = `${currentDialogueIdx + 1} / ${DIALOGUES.length}`;
+            textEl.innerHTML = '';
+            textEl.classList.add('typing-cursor');
+
+            let charIdx = 0;
+            isTyping = true;
+
+            function typeNextChar() {
+                if (charIdx < text.length) {
+                    textEl.innerHTML = text.substring(0, charIdx + 1);
+                    charIdx++;
+                    typingTimeout = setTimeout(typeNextChar, 35);
+                } else {
+                    isTyping = false;
+                    textEl.classList.remove('typing-cursor');
+                    // 停留 4 秒後自動輪播下一句
+                    typingTimeout = setTimeout(() => {
+                        showDialogue(currentDialogueIdx + 1);
+                    }, 4000);
+                }
+            }
+
+            typeNextChar();
+        }
+
+        function triggerMascotSpeak() {
+            playSound('correct');
+            // 若還在打字中，點擊直接顯示全文；否則切換至下一句
+            if (isTyping) {
+                if (typingTimeout) clearTimeout(typingTimeout);
+                const textEl = document.getElementById('mascot-dialogue-text');
+                textEl.innerText = DIALOGUES[currentDialogueIdx];
+                textEl.classList.remove('typing-cursor');
+                isTyping = false;
+                typingTimeout = setTimeout(() => {
+                    showDialogue(currentDialogueIdx + 1);
+                }, 4000);
+            } else {
+                showDialogue(currentDialogueIdx + 1);
+            }
+        }
+
+        // 頁面載入時自動初始化對話
+        window.onload = function() {
+            startDialogueAnimation();
+        };
+
+        // 更新頂部資訊列
+        function updateHeader() {
+            document.getElementById('player-name-display').innerText = gameState.studentName;
+            document.getElementById('score-text').innerText = gameState.score;
+            
+            const livesContainer = document.getElementById('lives-container');
+            livesContainer.innerHTML = '';
+            for (let i = 0; i < 3; i++) {
+                if (i < gameState.lives) {
+                    livesContainer.innerHTML += '<i class="fa-solid fa-heart animate-bounce"></i>';
+                } else {
+                    livesContainer.innerHTML += '<i class="fa-regular fa-heart opacity-40"></i>';
+                }
+            }
+        }
+    </script>
+</body>
+</html>
